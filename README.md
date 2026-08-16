@@ -43,10 +43,20 @@ Tree-based boosting clearly outperformed linear models, indicating the drivers o
 - **`Days for shipment (scheduled)`** dominates: orders with *tight* scheduled windows are the ones that go late — short promises get missed, generous ones get met
 - Location features (latitude/longitude, order city/state/country) contribute moderately
 - Price and discount features contribute little, validating the strategy of keeping plausible features initially and letting SHAP judge, rather than dropping on intuition
+  
+## Serving
+
+The trained model is served as a REST API (see [`api/`](api/)):
+
+- Model, feature ordering, and a sample request exported from the training notebook as portable JSON artifacts
+- **FastAPI** service with `/predict` and `/health` endpoints
+- Pydantic request validation, feature-order enforcement, and a missing-feature check that returns exactly which fields are absent
+- Per-request latency logging; model loads once at startup, not per request
+- Prediction parity verified: the served model reproduces the notebook's output exactly on the sample input
 
 ## Tech Stack
 
-Python · pandas · scikit-learn · XGBoost · SHAP
+Python · pandas · scikit-learn · XGBoost · SHAP · FastAPI
 
 ---
 

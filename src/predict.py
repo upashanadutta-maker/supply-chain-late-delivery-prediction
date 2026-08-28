@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import joblib
@@ -6,8 +7,10 @@ import pandas as pd
 from src.preprocessing import transform_features
 
 
-DEFAULT_MODEL_PATH = "artifacts/model_bundle.joblib"
-
+DEFAULT_MODEL_PATH = os.getenv(
+    "MODEL_PATH",
+    "artifacts/model_bundle.joblib",
+)
 
 def load_model_bundle(model_path=DEFAULT_MODEL_PATH):
     """

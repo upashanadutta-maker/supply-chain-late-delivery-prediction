@@ -1,19 +1,51 @@
 # Late Delivery Risk API
 
-Serves the XGBoost model from this repo behind an HTTP endpoint.
+FastAPI serving layer for the supply-chain late-delivery prediction model.
+
+The API accepts raw order records, applies the same preprocessing rules used during training, loads the saved Gradient Boosting model bundle, and returns a late-delivery probability and binary prediction.
+
+## Architecture
+
+Raw order data
+
+→ FastAPI endpoint
+
+→ `src/predict.py`
+
+→ `src/preprocessing.py`
+
+→ saved `model_bundle.joblib`
+
+→ prediction
+
+## Model
+
+The production model is a tuned `GradientBoostingClassifier`.
+
+Parameters:
+
+- `n_estimators = 100`
+- `learning_rate = 0.05`
+- `max_depth = 3`
+- decision threshold = `0.40`
+
+Final test performance:
+
+- ROC-AUC: `0.7710`
+- Accuracy: `0.6800`
+- Precision: `0.7076`
+- Recall: `0.7058`
+- F1-score: `0.7067`
 
 ## Endpoints
-- `GET /health` - service status and expected feature count
-- `POST /predict` - accepts 31 features, returns probability, class, and latency
 
-## Run
-    pip install -r requirements.txt
-    uvicorn app:app --reload
+### Health Check
 
-Interactive docs at http://127.0.0.1:8000/docs
+`GET /health`
 
-## Design notes
-- Model loads once at startup, not per request
-- Incoming features are reordered to match training column order before inference
-- Requests missing any of the 31 features return a list of what is absent
-- Per-request latency is logged
+Example response:
+
+```json
+{
+  "status": "healthy"
+}

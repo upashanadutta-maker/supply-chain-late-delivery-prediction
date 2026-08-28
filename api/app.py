@@ -1,48 +1,93 @@
-import json
-import time
-import logging
+from typing import Any
 
 import pandas as pd
-import xgboost as xgb
-from fastapi import FastAPI
+
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-logging.basicConfig(level=logging.INFO)
+from src.predict import (
+    load_model_bundle,
+    predict,
+)
 
-model = xgb.Booster()
-model.load_model("supply_chain_model.json")
 
-with open("feature_names.json") as f:
-    FEATURE_NAMES = json.load(f)
-
-app = FastAPI(title="Late Delivery Risk API")
+app = FastAPI(
+    title="Late Delivery Risk API",
+    description=(
+        "Predicts the probability that a supply-chain "
+        "order will be delivered late."
+    ),
+    version="1.0.0",
+)
 
 
 class PredictionRequest(BaseModel):
-    features: dict[str, float]
+    records: list[dict[str, Any]]
+
+
+model_bundle = None
+
+
+def get_model_bundle():
+    """
+    Load the trained model bundle once
+    and reuse it for future predictions.
+    """
+
+    global model_bundle
+
+    if model_bundle is None:
+        model_bundle = load_model_bundle()
+
+    return model_bundle
+
+
+@app.get("/")
+def root():
+    return {
+        "message": "Late Delivery Risk API is running."
+    }
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "n_features": len(FEATURE_NAMES)}
+    return {
+        "status": "healthy"
+    }
 
 
 @app.post("/predict")
-def predict(request: PredictionRequest):
-    start = time.time()
+def make_prediction(
+    request: PredictionRequest
+):
+    """
+    Predict late-delivery risk for one or
+    more raw order records.
+    """
 
-    missing = [name for name in FEATURE_NAMES if name not in request.features]
-    if missing:
-        return {"error": "missing features", "missing": missing}
+    try:
+        data = pd.DataFrame(
+            request.records
+        )
 
-    row = pd.DataFrame([request.features])[FEATURE_NAMES]
-    probability = float(model.predict(xgb.DMatrix(row))[0])
+        bundle = get_model_bundle()
 
-    latency_ms = (time.time() - start) * 1000
-    logging.info(f"prediction={probability:.4f} latency_ms={latency_ms:.2f}")
+        predictions = predict(
+            data,
+            bundle
+        )
 
-    return {
-        "late_delivery_probability": probability,
-        "predicted_class": int(probability > 0.5),
-        "latency_ms": round(latency_ms, 2),
-    }
+        return {
+            "predictions": (
+                predictions
+                .to_dict(
+                    orient="records"
+                )
+            )
+        }
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )

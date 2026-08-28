@@ -40,3 +40,16 @@ DROP_COLUMNS = (
     + UNUSABLE_COLUMNS
     + IDENTIFIER_COLUMNS
 )
+def remove_unusable_columns(data):
+    """
+    Remove leakage, unusable, and identifier columns.
+    """
+
+    processed_data = data.copy()
+
+    processed_data = processed_data.drop(
+        columns=DROP_COLUMNS,
+        errors="ignore"
+    )
+
+    return processed_data

@@ -9,7 +9,11 @@ from src.preprocessing import (
 def test_preprocessing_pipeline():
 
     train_data = pd.DataFrame({
-        "Type": ["DEBIT", "CASH", "DEBIT"],
+        "Type": [
+            "DEBIT",
+            "CASH",
+            "DEBIT",
+        ],
         "Shipping Mode": [
             "Standard Class",
             "First Class",
@@ -17,8 +21,8 @@ def test_preprocessing_pipeline():
         ],
         "order date (DateOrders)": [
             "1/1/2018 10:00",
-            "1/2/2018 15:00",
-            "1/3/2018 20:00",
+            "2/2/2018 15:00",
+            "3/3/2018 20:00",
         ],
         "Delivery Status": [
             "Late delivery",
@@ -47,14 +51,20 @@ def test_preprocessing_pipeline():
 def test_unseen_category():
 
     train_data = pd.DataFrame({
-        "Type": ["DEBIT", "CASH"],
+        "Type": [
+            "DEBIT",
+            "DEBIT",
+            "CASH",
+        ],
         "Shipping Mode": [
+            "Standard Class",
             "Standard Class",
             "First Class",
         ],
         "order date (DateOrders)": [
             "1/1/2018 10:00",
-            "1/2/2018 15:00",
+            "2/2/2018 15:00",
+            "3/3/2018 20:00",
         ],
     })
 
@@ -62,7 +72,7 @@ def test_unseen_category():
         "Type": ["TRANSFER"],
         "Shipping Mode": ["Same Day"],
         "order date (DateOrders)": [
-            "1/3/2018 20:00"
+            "4/4/2018 12:00"
         ],
     })
 
